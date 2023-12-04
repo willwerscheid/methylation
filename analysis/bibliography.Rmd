@@ -1,0 +1,22 @@
+---
+title: "Bibliography"
+author: "Jason Willwerscheid"
+date: "2023-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## General
+
+* Singer (2019), ["A Practical Guide to the Measurement and Analysis of DNA Methylation."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6775954/)
+
+* Park and Wu (2016), ["Differential Methylation Analysis for BS-seq Data under General Experimental Design."](https://pubmed.ncbi.nlm.nih.gov/26819470/) Argues for arcsin transform.
+* Wu (2023), ["The DSS User’s Guide."](https://www.bioconductor.org/packages/devel/bioc/vignettes/DSS/inst/doc/DSS.html) Vignette for software accompanying Park and Wu.
+
+## Datasets
+
+* De Jager et al. (2015), ["Alzheimery's Disease Pathology is Associated with Early Alterations in Brain DNA Methylation at ANK1, BIN1, RHBDF2 and Other Loci."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4292795/) Original ROSMAP dataset?
+* Huels et al. (2020), ["Association Between DNA Methylation Levels in Brain Tissue and Late-Life Depression in Community-Based Participants."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7393126/) Another paper using the ROSMAP dataset.

@@ -11,3 +11,5 @@ editor_options:
 ROSMAP data:
 
 * [No data transform, group priors, iterative re-imputation](group_priors.html).
+
+[Bibliography.](bibliography.html)
