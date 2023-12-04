@@ -1,0 +1,150 @@
+---
+title: "EBMF Fit to ROSMAP Data (Group Priors, Iterative Re-Imputation)"
+author: "Jason Willwerscheid"
+date: "2023-12-04"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The code below has been pre-run; results are loaded here:
+
+```{r output, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(flashier)
+
+load("../output/group_priors.RData")
+```
+
+## Process Data
+
+I load in the ROSMAP data and remove sites with at least 50% missing data across subjects. This leaves one site on the Y chromosome, which I also remove. 
+
+```{r data, eval=FALSE}
+chroms_to_cpg_id <- data.table::fread("../data/chroms_to_cpg_id.csv.gz") 
+ROSMAP_array <- data.table::fread(
+  "../data/ROSMAP_assay_methylationArray_metadata.sesame.beta.tsv.gz"
+)
+
+missingness <- ROSMAP_array |>
+  mutate(pct_NA = rowMeans(is.na(across(!ID)))) |>
+  select(ID, pct_NA)
+chroms_to_cpg_id <- chroms_to_cpg_id |>
+  rename(chrom = `#chr`) |>
+  full_join(missingness, by = "ID") 
+sites_to_keep <- chroms_to_cpg_id |>
+  filter(pct_NA < 0.5, chrom != "chrY") |>
+  arrange(chrom, start)
+
+dat <- sites_to_keep |>
+  select(ID) |>
+  left_join(ROSMAP_array, by = "ID") |>
+  select(-ID) |>
+  as.matrix()
+rm(ROSMAP_array)
+```
+
+Here are the number of remaining sites per chromosome:
+
+```{r}
+sort(table(sites_to_keep$chrom))
+```
+
+
+## Data Transform
+
+In this analysis I run `flashier` on the untransformed data. **I should repeat this analysis using the arcsin transform**, as suggested by Park and Wu (2016).
+
+
+## Fit EBMF
+
+I make two modifications to the default `flash()` fit. 
+
+First, **I use group priors, with one prior estimated per chromosome**. This is a good way to test whether chromosome-specific factors are actually needed. It also turns out to be a fair bit faster than using a single prior across all sites, for reasons I don't understand. I note however that using group priors should allow us to further speed up computation by up to a factor of about 20 by partitioning the data by chromosome and distributing computation (maybe using `sparklyr`?).
+
+Second, the presence of missing data slows `flashier` down a lot, so **I begin by imputing missing data at the site means and then I re-impute after every 20 backfit iterations**. 
+
+The `flashier` code thus appears as follows. I add 50 factors and perform 200 backfit iterations.
+
+```{r eval=FALSE}
+# Greedy fit with 20 backfit iterations.
+t0 <- Sys.time()
+fl <- flash_init(dat, var_type = 0) |>
+  flash_set_verbose(3) |>
+  flash_greedy(Kmax = 50L,
+               ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                           ebnm_normal)) |>
+  flash_backfit(maxiter = 20L) |>
+  flash_nullcheck()
+tg <- Sys.time() - t0
+
+tb <- numeric(0)
+for (i in 1:9) {
+  # Re-impute using flash fit.
+  dat[which_na] <- fitted(fl)[which_na]
+  # 20 backfit iterations.
+  t0 <- Sys.time()
+  fl <- fl |>
+    flash_update_data(dat) |>
+    flash_set_verbose(3) |>
+    flash_backfit(maxiter = 20L) |>
+    flash_nullcheck()
+  tb <- c(tb, Sys.time() - t0)
+}
+```
+
+
+## Fitting Times
+
+The first step (the greedy fit and the first 20 backfit iterations) required:
+
+```{r tg}
+tg
+```
+
+Each subsequent step required (times are given in minutes):
+
+```{r tb}
+tb
+```
+
+Thus the total fitting time was:
+
+```{r total_t}
+tg + sum(tb / 60)
+```
+
+
+## PVE of Factors
+
+The scree plot makes it difficult to decide how many factors are necessary; there is no clear drop-off anywhere. Should we have continued to add greedy factors? I should check whether `flashier` will keep adding factors up to say 100 or whether it will eventually stop.
+
+```{r pve}
+plot(fl, include_scree = TRUE, include_pm = FALSE)
+```
+
+
+## Sparsity
+
+Finally I check the estimated sparsity of factors (i.e, the estimated $\pi_0$ for each of the chromosome-specific priors). Note that the X chromosome is estimated much differently from the others. **We saw that per-chromosome fits actually do better than a whole-chromosome fit. Is this primarily due to improved performance on X chromosome sites?** We should check this.
+
+There are other differences (e.g., chromosome 19 in factor 21), but they seem pretty minor. It still seems worthwhile to use group priors if they are truly faster to fit, but I would not expect them to offer much improvement except as regards the sex chromosomes.
+
+```{r sparsity}
+pi0 <- t(sapply(fl$L_ghat, function(x) sapply(x, function(y) y$pi[1])))
+tib <- as_tibble(pi0) |>
+  mutate(Factor = 1:nrow(pi0)) |>
+  pivot_longer(-Factor, names_to = "Chromosome", values_to = "Sparsity") |>
+  mutate(Chromosome = str_remove(Chromosome, "chr")) |>
+  mutate(Chromosome = factor(Chromosome, levels = c(as.character(1:22), "X")))
+ggplot(tib, aes(x = Chromosome, y = Factor, fill = Sparsity)) + 
+  geom_tile() +
+  scale_fill_gradient(low = "black", high = "white") +
+  scale_y_reverse(breaks = seq(5, 50, by = 5)) +
+  theme_minimal()
+```
