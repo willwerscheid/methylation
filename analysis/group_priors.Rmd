@@ -18,7 +18,7 @@ The code below has been pre-run; results are loaded here:
 library(tidyverse)
 library(flashier)
 
-load("../output/group_priors.RData")
+load("./output/group_priors.RData")
 ```
 
 ## Process Data
@@ -26,9 +26,9 @@ load("../output/group_priors.RData")
 I load in the ROSMAP data and remove sites with at least 50% missing data across subjects. This leaves one site on the Y chromosome, which I also remove. 
 
 ```{r data, eval=FALSE}
-chroms_to_cpg_id <- data.table::fread("../data/chroms_to_cpg_id.csv.gz") 
+chroms_to_cpg_id <- data.table::fread("./data/chroms_to_cpg_id.csv.gz") 
 ROSMAP_array <- data.table::fread(
-  "../data/ROSMAP_assay_methylationArray_metadata.sesame.beta.tsv.gz"
+  "./data/ROSMAP_assay_methylationArray_metadata.sesame.beta.tsv.gz"
 )
 
 missingness <- ROSMAP_array |>
