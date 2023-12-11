@@ -13,7 +13,7 @@
 
 <meta name="date" content="2023-12-04" />
 
-<title>Bibliography</title>
+<title>EBMF Fit to ROSMAP Data (Greedy Fit, 100 Factors)</title>
 
 <script src="site_libs/header-attrs-2.25/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -351,7 +351,8 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Bibliography</h1>
+<h1 class="title toc-ignore">EBMF Fit to ROSMAP Data (Greedy Fit, 100
+Factors)</h1>
 <h4 class="author">Jason Willwerscheid</h4>
 <h4 class="date">2023-12-04</h4>
 
@@ -420,10 +421,10 @@ changes </a>
 <div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown file has unstaged changes. To know which version of
-the R Markdown file created these results, you’ll want to first commit
-it to the Git repo. If you’re still working on the analysis, you can
-ignore this warning. When you’re finished, you can run
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
 <code>wflow_publish</code> to commit the R Markdown file and build the
 HTML.</p>
 </div>
@@ -563,10 +564,6 @@ Untracked files:
     Untracked:  output/group_priors.RData
     Untracked:  per_chrom_fits.R
 
-Unstaged changes:
-    Modified:   analysis/bibliography.Rmd
-    Modified:   analysis/index.Rmd
-
 </code></pre>
 <p>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not
@@ -580,122 +577,109 @@ have uncommitted changes.
 <hr>
 </div>
 <div id="versions" class="tab-pane fade">
-
 <p>
-These are the previous versions of the repository in which changes were
-made to the R Markdown (<code>analysis/bibliography.Rmd</code>) and HTML
-(<code>docs/bibliography.html</code>) files. If you’ve configured a
-remote Git repository (see <code>?wflow_git_remote</code>), click on the
-hyperlinks in the table below to view the files as they were in that
-past version.
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
 </p>
-<div class="table-responsive">
-<table class="table table-condensed table-hover">
-<thead>
-<tr>
-<th>
-File
-</th>
-<th>
-Version
-</th>
-<th>
-Author
-</th>
-<th>
-Date
-</th>
-<th>
-Message
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-Rmd
-</td>
-<td>
-<a href="https://github.com/willwerscheid/methylation/blob/edf2037100b08faa3def315683a71aae6acd9a25/analysis/bibliography.Rmd" target="_blank">edf2037</a>
-</td>
-<td>
-Jason Willwerscheid
-</td>
-<td>
-2023-12-04
-</td>
-<td>
-Add bibliography page.
-</td>
-</tr>
-<tr>
-<td>
-html
-</td>
-<td>
-<a href="https://rawcdn.githack.com/willwerscheid/methylation/edf2037100b08faa3def315683a71aae6acd9a25/docs/bibliography.html" target="_blank">edf2037</a>
-</td>
-<td>
-Jason Willwerscheid
-</td>
-<td>
-2023-12-04
-</td>
-<td>
-Add bibliography page.
-</td>
-</tr>
-</tbody>
-</table>
-</div>
 <hr>
 </div>
 </div>
 </div>
-<div id="general" class="section level2">
-<h2>General</h2>
-<ul>
-<li>Singer (2019), <a
-href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6775954/">“A
-Practical Guide to the Measurement and Analysis of DNA
-Methylation.”</a></li>
-<li>Du et al (2010), [“Comparison of Beta-Value and M-Value Methods for
-Quantifying Methylation Levels by Microarray Analysis.”] (<a
-href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587"
-class="uri">https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587</a>)</li>
-<li>Park and Wu (2016), <a
-href="https://pubmed.ncbi.nlm.nih.gov/26819470/">“Differential
-Methylation Analysis for BS-seq Data under General Experimental
-Design.”</a> Argues for arcsin transform.</li>
-<li>Zhou et al (2018), <a
-href="https://academic.oup.com/nar/article/46/20/e123/5061974?login=true">“SeSAMe:
-Reducing Artifactual Detection of DNA Methylation by Infinium BeadChips
-in Genomic Deletions.”</a> On normalizing beta values.</li>
-<li>Soler-Blasco et al (2021), <a
-href="https://www.sciencedirect.com/science/article/pii/S0013935121001833">“Urinary
-Arsenic Species and Methylation Efficiency During Pregnancy:
-Concentrations and Associated Factors in Spanish Pregnant Women.”</a>
-Uses probit transform.</li>
-<li>Wu (2023), <a
-href="https://www.bioconductor.org/packages/devel/bioc/vignettes/DSS/inst/doc/DSS.html">“The
-DSS User’s Guide.”</a> Vignette for software accompanying Park and
-Wu.</li>
-</ul>
+<p>Here I run <code>flashier</code> with <a
+href="group_priors.html">group priors</a> and
+<code>greedy.Kmax = 100</code>. I wanted to see whether the full 100
+factors would be added (they are!), and if so, how they are contributing
+to the overall fit (in terms of PVE and sparsity).</p>
+<p>The code below has been pre-run; results are loaded here:</p>
+<pre class="r"><code>library(tidyverse)
+library(flashier)
+
+load(&quot;./output/greedy.RData&quot;)</code></pre>
+<div id="pre-process-data" class="section level2">
+<h2>Pre-process Data</h2>
+<p>As before, I load in the ROSMAP data and remove sites with at least
+50% missing data across subjects. Additionally, <strong>I transform the
+data using a probit transformation</strong> (following discussion with
+Gao Wang and Alexandre Pelletier).</p>
+<pre class="r"><code>dat &lt;- qnorm(dat)</code></pre>
 </div>
-<div id="datasets" class="section level2">
-<h2>Datasets</h2>
-<ul>
-<li>De Jager et al. (2015), <a
-href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4292795/">“Alzheimery’s
-Disease Pathology is Associated with Early Alterations in Brain DNA
-Methylation at ANK1, BIN1, RHBDF2 and Other Loci.”</a> Original ROSMAP
-dataset?</li>
-<li>Huels et al. (2020), <a
-href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7393126/">“Association
-Between DNA Methylation Levels in Brain Tissue and Late-Life Depression
-in Community-Based Participants.”</a> Another paper using the ROSMAP
-dataset.</li>
-</ul>
+<div id="fit-ebmf" class="section level2">
+<h2>Fit EBMF</h2>
+<p>The <code>flashier</code> code appears as follows. <strong>I impute
+missing data using <code>softImpute</code></strong> (following
+discussion with Gao Wang) and greedily add 100 factors without
+backfitting.</p>
+<pre class="r"><code>which_na &lt;- is.na(dat)
+
+t0 &lt;- Sys.time()
+si_fit &lt;- softImpute(dat) # Default is rank 2.
+t_si &lt;- Sys.time() - t0
+
+dat &lt;- complete(dat, si_fit)
+
+# Greedy fit.
+t0 &lt;- Sys.time()
+fl &lt;- flash_init(dat, var_type = 0) |&gt;
+  flash_set_verbose(3) |&gt;
+  flash_greedy(Kmax = 100L,
+               ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                           ebnm_normal)) 
+tg &lt;- Sys.time() - t0</code></pre>
+</div>
+<div id="fitting-times" class="section level2">
+<h2>Fitting Times</h2>
+<p>The addition of 100 greedy factors required:</p>
+<pre class="r"><code>tg</code></pre>
+<pre><code>Time difference of 8.392776 hours</code></pre>
+<p>This is about the same as was required to fit 50 greedy factors
+<em>with</em> backfitting. And in fact I would expect the greedy
+algorithm to scale quadratically in <span
+class="math inline">\(K\)</span> (since fitting the <span
+class="math inline">\(K\)</span>th factor requires doing matrix
+operations with matrices of size <span class="math inline">\(n \times (K
+- 1)\)</span> and <span class="math inline">\(p \times (K -
+1)\)</span>).</p>
+</div>
+<div id="pve-of-factors" class="section level2">
+<h2>PVE of Factors</h2>
+<p>After <span class="math inline">\(k = 25\)</span> or so, there is no
+clear drop-off in the scree plot:</p>
+<pre class="r"><code>plot(fl, include_scree = TRUE, include_pm = FALSE)</code></pre>
+<p><img src="figure/greedy100.Rmd/pve-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="sparsity" class="section level2">
+<h2>Sparsity</h2>
+<p>The sparsity heatmap tells a similar story to before. The X
+chromosome is again estimated much differently from the others, with
+differences among other chromosomes remaining small.</p>
+<p>It is worth noting that <strong>most factors after <span
+class="math inline">\(k = 50\)</span> or so are very sparse.</strong>
+These might be primarily fitting noise (especially since the PVE is so
+small).</p>
+<pre class="r"><code>pi0 &lt;- t(sapply(fl$L_ghat, function(x) sapply(x, function(y) y$pi[1])))
+tib &lt;- as_tibble(pi0) |&gt;
+  mutate(Factor = 1:nrow(pi0)) |&gt;
+  pivot_longer(-Factor, names_to = &quot;Chromosome&quot;, values_to = &quot;Sparsity&quot;) |&gt;
+  mutate(Chromosome = str_remove(Chromosome, &quot;chr&quot;)) |&gt;
+  mutate(Chromosome = factor(Chromosome, levels = c(as.character(1:22), &quot;X&quot;)))
+ggplot(tib, aes(x = Chromosome, y = Factor, fill = Sparsity)) + 
+  geom_tile() +
+  scale_fill_gradient(low = &quot;black&quot;, high = &quot;white&quot;) +
+  scale_y_reverse(breaks = seq(5, 50, by = 5)) +
+  theme_minimal()</code></pre>
+<p><img src="figure/greedy100.Rmd/sparsity-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>I am not sure this gives much guidance about which value of <span
+class="math inline">\(K\)</span> we should choose. From the scree plot
+it appears that 40–50 factors should suffice, and the sparsity plot
+lends some support to this choice.</p>
+<p>(I tried running <code>PCAtools::chooseMarchenkoPastur</code> as
+well, but the MP limit is well below the variance explained by the 100th
+factor. <strong>I suspect that unless we have a good way to estimate the
+(theoretical) variance of the random noise the MP limit will not be
+usable.</strong>)</p>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -720,20 +704,29 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] workflowr_1.7.1
+ [1] flashier_1.0.17 magrittr_2.0.3  ebnm_1.1-2      lubridate_1.9.3
+ [5] forcats_1.0.0   stringr_1.5.0   dplyr_1.1.3     purrr_1.0.2    
+ [9] readr_2.1.4     tidyr_1.3.0     tibble_3.2.1    ggplot2_3.4.4  
+[13] tidyverse_2.0.0 workflowr_1.7.1
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.11       compiler_4.2.1    pillar_1.9.0      bslib_0.5.1      
- [5] later_1.3.1       git2r_0.32.0      jquerylib_0.1.4   tools_4.2.1      
- [9] getPass_0.2-2     digest_0.6.33     jsonlite_1.8.7    evaluate_0.23    
-[13] lifecycle_1.0.3   tibble_3.2.1      pkgconfig_2.0.3   rlang_1.1.2      
-[17] cli_3.6.1         rstudioapi_0.15.0 yaml_2.3.7        xfun_0.41        
-[21] fastmap_1.1.1     httr_1.4.7        stringr_1.5.0     knitr_1.45       
-[25] fs_1.6.3          vctrs_0.6.4       sass_0.4.7        rprojroot_2.0.4  
-[29] glue_1.6.2        R6_2.5.1          processx_3.8.2    fansi_1.0.5      
-[33] rmarkdown_2.25    callr_3.7.3       magrittr_2.0.3    whisker_0.4.1    
-[37] ps_1.7.5          promises_1.2.1    htmltools_0.5.7   httpuv_1.6.12    
-[41] utf8_1.2.4        stringi_1.7.12    cachem_1.0.8     </code></pre>
+ [1] Rcpp_1.0.11       horseshoe_0.2.0   invgamma_1.1      lattice_0.22-5   
+ [5] getPass_0.2-2     ps_1.7.5          rprojroot_2.0.4   digest_0.6.33    
+ [9] utf8_1.2.4        truncnorm_1.0-9   R6_2.5.1          evaluate_0.23    
+[13] highr_0.10        httr_1.4.7        pillar_1.9.0      rlang_1.1.2      
+[17] rstudioapi_0.15.0 irlba_2.3.5.1     whisker_0.4.1     callr_3.7.3      
+[21] jquerylib_0.1.4   Matrix_1.6-1.1    rmarkdown_2.25    labeling_0.4.3   
+[25] splines_4.2.1     munsell_0.5.0     mixsqp_0.3-48     compiler_4.2.1   
+[29] httpuv_1.6.12     xfun_0.41         pkgconfig_2.0.3   SQUAREM_2021.1   
+[33] htmltools_0.5.7   tidyselect_1.2.0  fansi_1.0.5       tzdb_0.4.0       
+[37] withr_2.5.2       later_1.3.1       grid_4.2.1        jsonlite_1.8.7   
+[41] gtable_0.3.4      lifecycle_1.0.3   git2r_0.32.0      scales_1.2.1     
+[45] cli_3.6.1         stringi_1.7.12    cachem_1.0.8      farver_2.1.1     
+[49] fs_1.6.3          promises_1.2.1    bslib_0.5.1       generics_0.1.3   
+[53] vctrs_0.6.4       trust_0.1-8       tools_4.2.1       softImpute_1.4-1 
+[57] glue_1.6.2        hms_1.1.3         parallel_4.2.1    processx_3.8.2   
+[61] fastmap_1.1.1     yaml_2.3.7        timechange_0.2.0  colorspace_2.1-0 
+[65] ashr_2.2-63       deconvolveR_1.2-1 knitr_1.45        sass_0.4.7       </code></pre>
 </div>
 </div>
 

@@ -12,9 +12,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ## General
 
 * Singer (2019), ["A Practical Guide to the Measurement and Analysis of DNA Methylation."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6775954/)
-
+* Du et al (2010), ["Comparison of Beta-Value and M-Value Methods for Quantifying Methylation Levels by Microarray Analysis."] (https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587)
 * Park and Wu (2016), ["Differential Methylation Analysis for BS-seq Data under General Experimental Design."](https://pubmed.ncbi.nlm.nih.gov/26819470/) Argues for arcsin transform.
+* Zhou et al (2018), ["SeSAMe: Reducing Artifactual Detection of DNA Methylation by Infinium BeadChips in Genomic Deletions."](https://academic.oup.com/nar/article/46/20/e123/5061974?login=true) On normalizing beta values.
+* Soler-Blasco et al (2021), ["Urinary Arsenic Species and Methylation Efficiency During Pregnancy: Concentrations and Associated Factors in Spanish Pregnant Women."](https://www.sciencedirect.com/science/article/pii/S0013935121001833) Uses probit transform.
 * Wu (2023), ["The DSS User’s Guide."](https://www.bioconductor.org/packages/devel/bioc/vignettes/DSS/inst/doc/DSS.html) Vignette for software accompanying Park and Wu.
+
+
 
 ## Datasets
 

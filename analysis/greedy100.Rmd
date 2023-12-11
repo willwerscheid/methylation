@@ -1,0 +1,104 @@
+---
+title: "EBMF Fit to ROSMAP Data (Greedy Fit, 100 Factors)"
+author: "Jason Willwerscheid"
+date: "2023-12-04"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here I run `flashier` with [group priors](group_priors.html) and `greedy.Kmax = 100`. I wanted to see whether the full 100 factors would be added (they are!), and if so, how they are contributing to the overall fit (in terms of PVE and sparsity).
+
+The code below has been pre-run; results are loaded here:
+
+```{r output, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(flashier)
+
+load("./output/greedy.RData")
+```
+
+## Pre-process Data
+
+As before, I load in the ROSMAP data and remove sites with at least 50% missing data across subjects. Additionally, **I transform the data using a probit transformation** (following discussion with Gao Wang and Alexandre Pelletier).
+
+```{r eval=FALSE}
+dat <- qnorm(dat)
+```
+
+
+## Fit EBMF
+
+The `flashier` code appears as follows. **I impute missing data using `softImpute`** (following discussion with Gao Wang) and greedily add 100 factors without backfitting.
+
+```{r eval=FALSE}
+which_na <- is.na(dat)
+
+t0 <- Sys.time()
+si_fit <- softImpute(dat) # Default is rank 2.
+t_si <- Sys.time() - t0
+
+dat <- complete(dat, si_fit)
+
+# Greedy fit.
+t0 <- Sys.time()
+fl <- flash_init(dat, var_type = 0) |>
+  flash_set_verbose(3) |>
+  flash_greedy(Kmax = 100L,
+               ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                           ebnm_normal)) 
+tg <- Sys.time() - t0
+```
+
+
+## Fitting Times
+
+The addition of 100 greedy factors required:
+
+```{r tg}
+tg
+```
+
+This is about the same as was required to fit 50 greedy factors *with* backfitting. And in fact I would expect the greedy algorithm to scale quadratically in $K$ (since fitting the $K$th factor requires doing matrix operations with matrices of size $n \times (K - 1)$ and $p \times (K - 1)$).
+
+
+## PVE of Factors
+
+After $k = 25$ or so, there is no clear drop-off in the scree plot:
+
+```{r pve}
+plot(fl, include_scree = TRUE, include_pm = FALSE)
+```
+
+
+## Sparsity
+
+The sparsity heatmap tells a similar story to before. The X chromosome is again estimated much differently from the others, with differences among other chromosomes remaining small. 
+
+It is worth noting that **most factors after $k = 50$ or so are very sparse.** These might be primarily fitting noise (especially since the PVE is so small).
+
+```{r sparsity}
+pi0 <- t(sapply(fl$L_ghat, function(x) sapply(x, function(y) y$pi[1])))
+tib <- as_tibble(pi0) |>
+  mutate(Factor = 1:nrow(pi0)) |>
+  pivot_longer(-Factor, names_to = "Chromosome", values_to = "Sparsity") |>
+  mutate(Chromosome = str_remove(Chromosome, "chr")) |>
+  mutate(Chromosome = factor(Chromosome, levels = c(as.character(1:22), "X")))
+ggplot(tib, aes(x = Chromosome, y = Factor, fill = Sparsity)) + 
+  geom_tile() +
+  scale_fill_gradient(low = "black", high = "white") +
+  scale_y_reverse(breaks = seq(5, 50, by = 5)) +
+  theme_minimal()
+```
+
+
+## Conclusions
+
+I am not sure this gives much guidance about which value of $K$ we should choose. From the scree plot it appears that 40--50 factors should suffice, and the sparsity plot lends some support to this choice. 
+
+(I tried running `PCAtools::chooseMarchenkoPastur` as well, but the MP limit is well below the variance explained by the 100th factor. **I suspect that unless we have a good way to estimate the (theoretical) variance of the random noise the MP limit will not be usable.**)

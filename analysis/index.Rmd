@@ -12,4 +12,6 @@ ROSMAP data:
 
 * [No data transform, group priors, iterative re-imputation](group_priors.html).
 
+* [Probit transform, group priors, greedy fit of 100 factors](greedy100.html).
+
 [Bibliography.](bibliography.html)
