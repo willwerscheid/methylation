@@ -1,0 +1,129 @@
+---
+title: "Estimating K for the ROSMAP dataset via Parallel Analysis"
+author: "Jason Willwerscheid"
+date: "2023-12-15"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here I try a parallel analysis approach to estimate $K$ for the ROSMAP data.
+
+Again I pre-run the code; results are loaded here:
+
+```{r output, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(flashier)
+
+load("./output/paranalysis10factors.RData")
+load("./output/paranalysis10iters.RData")
+```
+
+## Pre-process Data
+
+As in previous write-ups, I load in the ROSMAP data, remove sites with at least 50% missing data across subjects, transform the data using a probit transformation, and impute missing data using `softImpute`.
+
+
+## Permute columns and fit EBMF
+
+In a first pass, I fit 10 factors to see how the PVE decays.
+
+```{r eval=FALSE}
+set.seed(666)
+pdat <- t(apply(dat, 1, sample))
+
+# Greedy fit.
+t0 <- Sys.time()
+fl <- flash_init(pdat, var_type = 0) |>
+  flash_set_verbose(2) |>
+  flash_greedy(Kmax = 10L,
+               ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                           ebnm_normal)) 
+t10 <- Sys.time() - t0
+```
+
+Fitting time:
+
+```{r}
+t10
+```
+
+Scree plot:
+
+```{r}
+plot(fl, include_pm = FALSE, include_scree = TRUE)
+```
+
+In a parallel analysis style approach we might use the PVE of the second factor as a cutoff. If we refer back to our 100-factor greedy fit we find that this would set $K$ around 30:
+
+```{r}
+cutoff <- fl$pve[2]
+load("./output/greedy.RData")
+plot(fl, include_pm = FALSE, include_scree = TRUE) + 
+  geom_hline(aes(yintercept = cutoff), linetype = "dashed")
+```
+
+
+## PVE or ELBO?
+
+There is at present no way to stop adding factors when they drop below a given PVE. How can we implement this permutation-based approach in general, when we do not have any idea about what range of $K$ we should be looking for? Perhaps we can check the PVE after every 5--10 factors added and stop when we find $\kappa$ factors beneath the threshold. 
+
+Another possibility is to use the difference in ELBO as a criterion (i.e., look at improvements in ELBO yielded by the addition of a second factor to the permuted datasets).
+
+Here I do ten separate permutations of the ROSMAP dataset, fit two factors to each, and track both the PVE of, and the improvement in ELBO yielded by, the second factor:
+
+```{r, eval=FALSE}
+niter <- 10
+tlist <- numeric(niter)
+pvelist <- numeric(niter)
+elbodifflist <- numeric(niter)
+
+set.seed(999)
+for (i in 1:niter) {
+  t0 <- Sys.time()
+  pdat <- t(apply(dat, 1, sample))
+  fl <- flash_init(pdat, var_type = 0) |>
+    flash_set_verbose(0) |>
+    flash_greedy(Kmax = 1L,
+                 ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                             ebnm_normal)) 
+  elbo <- fl$elbo
+  fl <- fl |>
+    flash_greedy(Kmax = 1L,
+                 ebnm_fn = c(flash_ebnm(group = sites_to_keep$chrom), 
+                             ebnm_normal)) 
+  tlist[i] <- Sys.time() - t0
+  pvelist[i] <- fl$pve[2]
+  elbodifflist[i] <- fl$elbo - elbo
+}
+```
+
+#### Timings (in minutes):
+
+```{r}
+boxplot(tlist)
+```
+
+#### ELBO difference:
+
+```{r}
+boxplot(elbodifflist)
+```
+
+#### PVE:
+
+```{r}
+boxplot(pvelist)
+```
+
+
+## Conclusions
+
+**Results are very consistent across iterations**, which suggests that we only need to do a small number of permutations (maybe two or three is enough)? **The permutation-based PVE cutoff also makes a lot of sense**; surprisingly, it is very much in line with results I obtained using per-chromosome fits (there were 25--30 factors in most of my per-chromosome fits, and the PVE cutoff gives us $K \approx 30$ above).
+
+As far as implementing this approach goes, **I would prefer to add ~5 factors at a time and then check PVE, stopping when at least 2 or 3 do not meet the PVE threshold.** The PVE is not monotonic as a function of $k$, so there is a possibility that we stop too early if we reject the first factor that does not meet our threshold (the `flashier` plots are somewhat deceptive, since they re-arrange the factors to produce a monotonic curve). 

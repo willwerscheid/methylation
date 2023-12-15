@@ -14,4 +14,6 @@ ROSMAP data:
 
 * [Probit transform, group priors, greedy fit of 100 factors](greedy100.html).
 
+* [Estimating $K$ via parallel analysis](parallel_analysis.html).
+
 [Bibliography.](bibliography.html)
